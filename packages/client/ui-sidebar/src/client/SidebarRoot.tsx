@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
+  FishLogo, IconFolderOpenOutline16, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SidebarRootComponentProps } from './contract/slots.ts'
 import css from './SidebarRoot.module.css'
@@ -199,6 +199,19 @@ export function SidebarRoot({
       {/* Footer actions stack above Settings in both sidebar widths. */}
       <div className={css.footArea}>
         <div className={css.footerActions}>
+          {/* 工作区文件入口（fork 增强）：打开 /workspace-files 页面
+              （浏览/上传/下载工作区文件，由 dsh-host-workspace-files 提供）。 */}
+          <Tooltip label={t('workspace.files.label')} delayMs={500} disabled={wide}>
+            <button
+              type="button"
+              className={css.filesButton}
+              aria-label={t('workspace.files.label')}
+              onClick={() => { window.open('/workspace-files', '_blank', 'noopener') }}
+            >
+              <IconFolderOpenOutline16 size={wide ? 14 : 18} />
+              {wide && <span className={clsx(css.filesLabel, css.wide)}>{t('workspace.files')}</span>}
+            </button>
+          </Tooltip>
           {renderSlot('sidebar.footer.action', { wide })}
         </div>
         <div className={css.settingsArea}>

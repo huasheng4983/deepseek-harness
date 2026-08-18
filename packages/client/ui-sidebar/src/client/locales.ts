@@ -6,6 +6,8 @@ export const zh = {
   'session.new.label': '新建会话',
   'toggle.open': '打开侧边栏',
   'toggle.collapse': '收起侧边栏',
+  'workspace.files': '工作区文件',
+  'workspace.files.label': '浏览 / 上传 / 下载工作区文件',
 } satisfies Record<string, string>
 
 /** The sidebar namespace key union. */
@@ -17,4 +19,6 @@ export const en = {
   'session.new.label': 'New session',
   'toggle.open': 'Open sidebar',
   'toggle.collapse': 'Collapse sidebar',
+  'workspace.files': 'Workspace Files',
+  'workspace.files.label': 'Browse / upload / download workspace files',
 } satisfies Record<SidebarKey, string>

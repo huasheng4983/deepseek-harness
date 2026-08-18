@@ -9,6 +9,7 @@ import type {
   ModelRetryNode, TurnErrorNode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-runtime/client'
 import { JsonBlock, MessageText, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconDownloadOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatNodeOwnerProps, ChatNodeViewProps, ChatViewSlotProps } from '../contract/slots.ts'
 import { ReferenceIcon } from '../reference/ReferenceIcon.tsx'
 import { CompactionItem } from './CompactionItem.tsx'
@@ -17,6 +18,47 @@ import { MessageIconActions } from './MessageIconActions.tsx'
 import css from './MessageItem.module.css'
 
 type UserImage = Extract<UserMessageNode['content'][number], { type: 'image' }>
+
+/** 工作区文件上传消息标记（fork 增强）：上传按钮发送的用户消息前缀。 */
+const WORKSPACE_FILE_MARKER = '[workspace-file]'
+
+/** 工作区文件气泡负载。 */
+interface WorkspaceFilePayload {
+  name: string
+  size?: number
+  path?: string
+}
+
+/** 人类可读大小。 */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
+
+/** 文件卡片：图标 + 名称/大小 + 下载链接（指向工作区下载 API）。 */
+function WorkspaceFileCard({ file }: { file: WorkspaceFilePayload }) {
+  const name = file.name || 'file'
+  const path = file.path ?? name
+  return (
+    <div className={css.wfCard}>
+      <span className={css.wfIcon} aria-hidden>📄</span>
+      <div className={css.wfMeta}>
+        <span className={css.wfName} title={path}>{name}</span>
+        <span className={css.wfSize}>{formatFileSize(file.size ?? 0)}</span>
+      </div>
+      <a
+        className={css.wfDownload}
+        href={`/workspace-files/api/download?path=${encodeURIComponent(path)}`}
+        download={name}
+      >
+        <IconDownloadOutline16 size={14} />
+        下载
+      </a>
+    </div>
+  )
+}
 
 function contentParts(content: readonly unknown[]): {
   text: string
@@ -154,6 +196,33 @@ function TurnMaxTokensItem({ t }: {
  * compose time, so shape alone decorates).
  */
 function projectUserText(text: string, sessionLabels: readonly string[]): ReactNode {
+  // 工作区文件上传气泡（fork 增强）：标记消息渲染为文件卡片列表；
+  // 换行之后的部分是用户随消息输入的文本，继续渲染。
+  if (text.startsWith(WORKSPACE_FILE_MARKER)) {
+    const rest = text.slice(WORKSPACE_FILE_MARKER.length)
+    const newline = rest.indexOf('\n')
+    const jsonPart = newline === -1 ? rest : rest.slice(0, newline)
+    const userPart = newline === -1 ? '' : rest.slice(newline + 1)
+    try {
+      const parsed: unknown = JSON.parse(jsonPart)
+      const files = (parsed as { files?: unknown }).files ?? parsed
+      if (Array.isArray(files) && files.length > 0) {
+        const cards = (
+          <div className={css.wfCards}>
+            {files.map((file, index) => (
+              <WorkspaceFileCard key={index} file={file as WorkspaceFilePayload} />
+            ))}
+          </div>
+        )
+        if (userPart.trim() !== '') {
+          return <>{cards}<div className={css.wfUserText}>{projectUserText(userPart, sessionLabels)}</div></>
+        }
+        return cards
+      }
+    } catch {
+      // 负载解析失败：回落普通文本
+    }
+  }
   const ranges: { start: number; end: number; label: string; kind: 'session' | 'plain' }[] = []
   for (const rawLabel of [...new Set(sessionLabels)].sort((a, b) => b.length - a.length)) {
     const label = `@${rawLabel}`

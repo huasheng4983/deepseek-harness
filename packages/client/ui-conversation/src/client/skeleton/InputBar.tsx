@@ -10,7 +10,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { ChangeEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import {
-  IconPlusOutline16, IconWarningOutline16, Toast, Tooltip,
+  IconPlusOutline16, IconPaperclipOutline16, IconWarningOutline16, Modal, Toast, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: the `plan` projection key merge (the TodoDock posture — the
 // composer reads a host-computed value; the domain owns the key).
@@ -34,6 +34,24 @@ import css from './InputBar.module.css'
 
 /** Decoration product of the no-session state (no machine, empty draft). */
 const INERT_DECORATIONS: DraftDecorations = { token: null, chips: [], textRefs: [], hint: null }
+
+/** 单文件上传上限（与服务端 dsh-host-workspace-files maxUploadBytes 一致）。 */
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+
+/** 人类可读文件大小。 */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
+
+/** 待发送的工作区上传文件。 */
+interface PendingUploadFile {
+  name: string
+  size: number
+  path: string
+}
 
 /** The selection and edit family a `beforeinput` recorded, with the draft length it applied to. */
 interface PendingEdit {
@@ -116,6 +134,14 @@ export function InputBar({
     setToast({ seq: toastSeq.current, text })
   }, [])
   const dismissToast = useCallback(() => { setToast(null) }, [])
+  // 超限文件弹窗（fork 增强）：单文件超过 100MB 时列出并拒绝上传。
+  const [uploadRejected, setUploadRejected] = useState<string[] | null>(null)
+  // 待发送的上传文件（fork 增强）：上传成功后进入气泡，随下一条消息提交。
+  const [pendingUploads, setPendingUploads] = useState<PendingUploadFile[]>([])
+  const removePendingUpload = useCallback((path: string) => {
+    setPendingUploads(prev => prev.filter(file => file.path !== path))
+    showToast(t('input.upload.removed'))
+  }, [showToast, t])
   // The deployment's image-intake limits (absent while no attachment service
   // is composed — the pre-check below then defers entirely to the host).
   const imageLimits = useProjection('imageLimits')
@@ -137,6 +163,8 @@ export function InputBar({
   }, [notice, showToast])
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const cardRef = useRef<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const uploadSeqRef = useRef(0)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const mirrorRef = useRef<HTMLDivElement | null>(null)
   const safari = useMemo(() => isSafariBrowser(navigator), [])
@@ -569,8 +597,82 @@ export function InputBar({
       return
     }
     if (inputActions === undefined) return // absent machine: the button is disabled
+    // 待发送的上传文件随本次提交一起发出：文件气泡标记 + 用户输入文本。
+    if (pendingUploads.length > 0) {
+      const marker = `[workspace-file]${JSON.stringify({ files: pendingUploads })}`
+      const userText = (input?.draft ?? '').trim()
+      inputActions.setDraft(userText === '' ? marker : `${marker}\n${userText}`)
+      setPendingUploads([])
+      inputActions.submit()
+      return
+    }
     /* v8 ignore next -- defensive: the primary button is disabled while empty||disabled, so a click cannot reach the false arm. */
     if (!empty && !disabled && !machineBusy) inputActions.submit()
+  }
+
+  // 上传文件到工作区（fork 增强）：直接把所选文件写入工作区根目录
+  // （/workspace-files/api/upload，同源 JSON base64），与会话状态无关。
+  // 全部成功后：文件进入「待发送」气泡（会话中），用户继续输入，点击发送
+  // 时随消息一起提交（见 onPrimary）；无会话时仅 toast 提示。
+  const onUploadPick = (event: ChangeEvent<HTMLInputElement>): void => {
+    const picked = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (picked.length === 0) return
+    // 单文件上限拦截：超限文件弹窗报错，不发起上传。
+    const rejected: string[] = []
+    const files = picked.filter((file) => {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        rejected.push(file.name)
+        return false
+      }
+      return true
+    })
+    if (rejected.length > 0) setUploadRejected(rejected)
+    if (files.length === 0) return
+    const seq = uploadSeqRef.current + 1
+    uploadSeqRef.current = seq
+    const uploaded: Array<{ name: string; size: number; path: string }> = []
+    let done = 0
+    const remaining = [...files]
+    const next = (): void => {
+      if (seq !== uploadSeqRef.current) return // a newer pick superseded this batch
+      if (remaining.length === 0) {
+        showToast(t('input.uploaded', { n: String(done) }))
+        // fork 增强：上传到工作区与会话状态无关（直接写 /workspace），因此
+        // 只要上传成功就进「待发送」气泡，让用户看到已上传的文件并随
+        // 下一条消息提交；不因无会话（inert/hero）而省略气泡。
+        if (done > 0) {
+          setPendingUploads(prev => [...prev, ...uploaded])
+        }
+        return
+      }
+      const current = remaining.shift()
+      if (current === undefined) return
+      const file = current
+      const reader = new FileReader()
+      reader.onload = () => {
+        const content = typeof reader.result === 'string' ? reader.result.split(',')[1] ?? '' : ''
+        fetch('/workspace-files/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: '', name: file.name, content }),
+        }).then(r => r.json()).then((data: { ok?: boolean; error?: string; path?: string }) => {
+          if (data.ok) {
+            done++
+            uploaded.push({ name: file.name, size: file.size, path: data.path ?? file.name })
+          } else {
+            showToast(`${file.name}: ${data.error ?? '上传失败'}`)
+          }
+          next()
+        }).catch((reason: unknown) => {
+          showToast(`${file.name}: 上传失败（${reason instanceof Error ? reason.message : String(reason)}）`)
+          next()
+        })
+      }
+      reader.onerror = () => { showToast(`${file.name}: 读取失败`); next() }
+      reader.readAsDataURL(file)
+    }
+    next()
   }
 
   // The Access seat: the projection-fed permission chip (renders nothing
@@ -717,6 +819,29 @@ export function InputBar({
             size: imageSizeText(imageLimits.maxImageBytes),
           },
         })}
+        {/* 待发送的上传文件气泡（fork 增强）：上传完成后显示，随消息提交 */}
+        {pendingUploads.length > 0 && (
+          <div className={css.pendingUploads} data-pending-uploads>
+            {pendingUploads.map(file => (
+              <div key={file.path} className={css.pendingUpload}>
+                <span className={css.pendingUploadIcon} aria-hidden>📄</span>
+                <div className={css.pendingUploadMeta}>
+                  <span className={css.pendingUploadName} title={file.path}>{file.name}</span>
+                  <span className={css.pendingUploadSize}>{formatFileSize(file.size)}</span>
+                </div>
+                <button
+                  type="button"
+                  className={css.pendingUploadRemove}
+                  aria-label={t('input.upload.remove')}
+                  onMouseDown={keepFocus}
+                  onClick={(e) => { e.stopPropagation(); removePendingUpload(file.path) }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         {/* One scrollport, two text layers. The hidden mirror renders draft+'\n' and stretches the
             stack to the draft's FULL height (counting rows by '\n' cannot see soft wraps); the
             absolutely-positioned backdrop and textarea ride that height, and .scroll — capped at 14
@@ -793,6 +918,25 @@ export function InputBar({
             {rightItems}
             {renderSlot('conversation.input.model', { locked: modelSeatLocked })}
             <ContextMeter useProjection={useProjection} t={t} />
+            {/* 上传到工作区（fork 增强）：位于发送按钮旁，直接写入工作区根目录 */}
+            <Tooltip label={t('input.uploadToWorkspace')} side="top" delayMs={500}>
+              <button
+                type="button"
+                className={css.upload}
+                aria-label={t('input.uploadToWorkspace')}
+                // 上传到工作区与会话无关（直接写 /workspace），故不随 inert/
+                // 未选工作区禁用；但会话已删除/被 block/父离线等真正不可用态仍禁用。
+                disabled={removed || blocked !== undefined || parentOffline}
+                onMouseDown={keepFocus}
+                // fork 增强：在"未选工作区/无会话"的 inert 态下，整张卡片是
+                // 选择工作区的点击目标（card onClick = onRequestWorkspace）。
+                // 这里必须打断冒泡，否则点上传按钮会误触发"选择工作区"，文件
+                // 选择器也被覆盖。
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
+              >
+                <IconPaperclipOutline16 size={14} />
+              </button>
+            </Tooltip>
             {interruptible && (
               <Tooltip label={t('input.stop')} side="top" delayMs={500}>
                 <button
@@ -814,7 +958,7 @@ export function InputBar({
                 type="button"
                 className={css.primary}
                 aria-label={primaryLabel}
-                disabled={primaryStops ? stop === undefined : empty || disabled || machineBusy}
+                disabled={primaryStops ? stop === undefined : (empty && pendingUploads.length === 0) || disabled || machineBusy}
                 onMouseDown={keepFocus}
                 onClick={onPrimary}
               >
@@ -832,6 +976,26 @@ export function InputBar({
           </div>
         </div>
       </div>
+      <input ref={fileInputRef} type="file" multiple hidden onChange={onUploadPick} />
+      {/* 超限文件弹窗（fork 增强） */}
+      <Modal
+        open={uploadRejected !== null}
+        onClose={() => { setUploadRejected(null) }}
+        closeLabel={t('input.uploadRejected.close')}
+        title={t('input.uploadRejected.title')}
+        footer={(
+          <button type="button" className={css.uploadRejectedOk} onClick={() => { setUploadRejected(null) }}>
+            {t('input.uploadRejected.ok')}
+          </button>
+        )}
+      >
+        <div className={css.uploadRejectedBody}>
+          <p>{t('input.uploadRejected.message', { max: '100MB' })}</p>
+          <ul className={css.uploadRejectedList}>
+            {(uploadRejected ?? []).map(name => <li key={name}>{name}</li>)}
+          </ul>
+        </div>
+      </Modal>
       {footer}
     </div>
   )

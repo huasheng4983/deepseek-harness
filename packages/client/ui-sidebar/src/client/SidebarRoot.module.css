@@ -276,6 +276,52 @@
   max-width: 0;
 }
 
+/* 工作区文件入口（fork 增强）：与 New Session 同几何，置于底栏动作区。 */
+.filesButton {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 8px 16px;
+  margin: 0 2px 4px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.filesButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.collapsed .filesButton {
+  align-self: flex-start;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0 0 4px;
+  gap: 0;
+}
+
+.filesLabel {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.collapsed .filesLabel {
+  max-width: 0;
+}
+
 /* Region seat: always mounted so the foot never moves. Its trailing margin
    cancels the wide shell inset so the nested scrollbar can sit at the sidebar
    edge; the browser restores that inset inside its own rows. */

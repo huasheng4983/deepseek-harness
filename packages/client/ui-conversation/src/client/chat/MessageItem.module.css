@@ -33,6 +33,81 @@
   font-size: 12px;
   line-height: 18px;
 }
+
+/* 工作区文件上传气泡（fork 增强）：文件卡片列表。 */
+.wfCards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0;
+  min-width: 260px;
+}
+
+.wfCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-button-floating-fill, transparent);
+}
+
+.wfIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.wfMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wfName {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wfSize {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wfDownload {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dsw-alias-link, var(--dsw-alias-label-secondary));
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.wfDownload:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 文件气泡下方随消息输入的文本 */
+.wfUserText {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+
 .contextRow {
   padding: 2px 0;
 }

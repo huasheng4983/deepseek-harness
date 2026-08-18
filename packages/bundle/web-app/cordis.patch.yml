@@ -125,6 +125,15 @@
         host: !!js ctx.webStartup.host ?? '127.0.0.1'
         port: !!js ctx.webStartup.port ?? 3080
 
+    # 工作区文件管理（页面 /workspace-files + JSON API）：浏览/上传/下载/
+    # 删除/新建目录，限定在配置 root 内（默认进程工作目录，平台部署时为
+    # 实例工作区卷 /workspace）。
+    - id: workspace-files
+      name: '@deepseek-ai/dsh-host-workspace-files'
+      config:
+        root: !!js process.cwd()
+        maxUploadBytes: 104857600
+
     # Web glue owned by this bundle: resolves the built frontend dist (an
     # assembly fact of dsh-web-app, never user config), mounts the
     # frontend-static fallback owner, registers the web-surface prompt

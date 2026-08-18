@@ -336,6 +336,256 @@
   cursor: default;
 }
 
+/* 上传到工作区（fork 增强）：与 .add 同款 28px 圆形次级按钮。 */
+.upload {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.upload:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.upload:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 超限文件弹窗（fork 增强） */
+.uploadRejectedBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.uploadRejectedList {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.uploadRejectedOk {
+  min-width: 72px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--dsw-specific-selector, var(--dsw-alias-button-elevated-fill));
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.uploadRejectedOk:hover {
+  filter: brightness(1.1);
+}
+
+/* 待发送的上传文件气泡（fork 增强） */
+.pendingUploads {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px 4px;
+}
+
+.pendingUpload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-button-elevated-fill);
+}
+
+.pendingUploadIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pendingUploadMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pendingUploadName {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pendingUploadSize {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.pendingUploadRemove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pendingUploadRemove:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 上传到工作区（fork 增强）：与 .add 同款 28px 圆形次级按钮。 */
+.upload {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.upload:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.upload:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 超限文件弹窗（fork 增强） */
+.uploadRejectedBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.uploadRejectedList {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.uploadRejectedOk {
+  min-width: 72px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--dsw-specific-selector, var(--dsw-alias-button-elevated-fill));
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.uploadRejectedOk:hover {
+  filter: brightness(1.1);
+}
+
+/* 待发送的上传文件气泡（fork 增强） */
+.pendingUploads {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px 4px;
+}
+
+.pendingUpload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-button-elevated-fill);
+}
+
+.pendingUploadIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pendingUploadMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pendingUploadName {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pendingUploadSize {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.pendingUploadRemove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pendingUploadRemove:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
 /* Plan / Read-only / model — native <select>, chip-like closed chrome
    (figma ToggleButton: 13/20 medium secondary, 12px chevron). */
 .select {
