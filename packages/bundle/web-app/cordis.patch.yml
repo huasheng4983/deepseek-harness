@@ -299,6 +299,11 @@
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 
+    # Workspace upload: the composer upload button + [workspace-file] card
+    # renderer, backed by the dsh-host-workspace-files routes.
+    - id: ui-workspace-upload
+      name: '@deepseek-ai/dsh-client-ui-workspace-upload'
+
     - id: ui-trajectory
       name: '@deepseek-ai/dsh-client-ui-trajectory'
 
