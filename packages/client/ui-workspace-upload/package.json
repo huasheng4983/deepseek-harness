@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-workspace-upload",
   "description": "Workspace upload plugin: a composer tool-row upload button writing picked files into the workspace via the dsh-host-workspace-files API, and a user-message renderer that turns the [workspace-file] marker into downloadable file cards",
-  "version": "0.1.2-alpha.1",
+  "version": "0.1.2-alpha.2",
   "publishConfig": {
     "access": "public"
   },
