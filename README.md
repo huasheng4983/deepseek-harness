@@ -1,5 +1,10 @@
 # DeepSeek Harness
 
+> **⚠️ 不稳定分支（UNSTABLE BRANCH）**：当前 `release/20260831` 分支包含平台定制改动，
+> 未经过上游完整发布流程验证，仅供内部平台使用，**不应用于生产级独立部署**。
+> 平台定制点：浏览器认证开关（`DSH_DISABLE_BROWSER_AUTH`）、工作区上传插件布局
+> （发送按钮右侧）、composer 槽位调整等。合并上游时可能发生冲突。
+
 English | [中文](README.zh.md)
 
 DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
