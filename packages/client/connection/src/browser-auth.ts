@@ -19,6 +19,10 @@ const STORED_SECRET_VERSION = 1
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]*$/
 const PROCESS_LAUNCH_TOKENS = new WeakMap<object, string>()
 
+// 平台开关：DSH_DISABLE_BROWSER_AUTH=1 时放行所有浏览器请求（与 r32 一致，
+// 平台经公网/反代访问实例，无法预知每次启动随机生成的 launch token）。
+const DISABLE_BROWSER_AUTH = /^(1|true|yes)$/i.test(process.env.DSH_DISABLE_BROWSER_AUTH ?? '')
+
 interface StoredSecretPayload {
   readonly version: typeof STORED_SECRET_VERSION
   readonly secret: string
@@ -238,6 +242,8 @@ export class BrowserAuth {
    * @returns true only when the caller may serve index.html.
    */
   authorizeIndex(req: ConnectionIndexRequest, res: ConnectionIndexResponse): boolean {
+    // 平台开关：禁用浏览器认证时直接放行 index（调用方负责响应主体）。
+    if (DISABLE_BROWSER_AUTH) return true
     /* v8 ignore next -- node:http always supplies url on server requests. */
     const url = new URL(req.url ?? '/', 'http://dsh.invalid')
     const tokens = url.searchParams.getAll(TOKEN_QUERY)
@@ -287,6 +293,8 @@ export class BrowserAuth {
    * @returns true only for an unexpired cookie signed by this activation's loaded secret.
    */
   isAuthenticated(request: ConnectionTrustRequest): boolean {
+    // 平台开关：禁用浏览器认证时视为已认证（API 请求放行）。
+    if (DISABLE_BROWSER_AUTH) return true
     const authority = requestAuthority(request.headers)
     const rawCookie = header(request.headers, 'cookie')
     if (authority === undefined || rawCookie === undefined) return false

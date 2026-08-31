@@ -457,7 +457,6 @@ export function InputBar({
             {leftItems}
           </div>
           <div className={css.trailing}>
-            {rightItems}
             {sessionId === undefined ? null : renderSlot('conversation.input.model', { locked: modelSeatLocked })}
             <ContextMeter useProjection={useProjection} t={t} />
             {interruptible && (
@@ -496,6 +495,9 @@ export function InputBar({
                 )}
               </button>
             </Tooltip>
+            {/* 发送按钮右侧（fork 增强）：input.right 槽内容（上传附件按钮等）
+                渲染在发送按钮之后，而非 trailing 区起始处。 */}
+            {rightItems}
           </div>
         </div>
       </div>
