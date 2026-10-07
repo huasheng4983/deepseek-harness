@@ -177,8 +177,9 @@
 
     # 工作区文件管理（页面 /workspace-files + JSON API）：浏览/上传/下载/
     # 删除/新建目录，限定在配置 root 内（默认进程工作目录，平台部署时为
-    # 实例工作区卷 /workspace）。
-    - id: workspace-files
+    # 实例工作区卷 /workspace）。id 用 workspace-files-page 以区别于上游
+    # dsh-api-workspace-files（Remote 服务层，占用 workspace-files 这个 id）。
+    - id: workspace-files-page
       name: '@deepseek-ai/dsh-host-workspace-files'
       config:
         root: !!js process.cwd()
