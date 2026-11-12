@@ -264,6 +264,15 @@ describe('Desktop local packaging configuration', () => {
     expect(() => { validateDesktopPackageEnvironment(RELEASE, MACOS) }).toThrow('DSH_DESKTOP_MACOS_SIGNING_IDENTITY')
   })
 
+  it('accepts unsigned Windows configuration without an update policy while signed builds still require one', () => {
+    // 未签名豁免原仅适用于 macOS；Windows 未签名构建同样没有真实策略服务，
+    // 故一并豁免（否则只能烘入一个虚构源站，让客户端持续轮询不存在的域名）。
+    const local = { DSH_DESKTOP_APP_ID: RELEASE.DSH_DESKTOP_APP_ID }
+    expect(() => { validateDesktopPackageEnvironment(local, WINDOWS, { unsigned: true }) }).not.toThrow()
+    expect(() => { validateDesktopPackageEnvironment(local, WINDOWS) })
+      .toThrow('DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN')
+  })
+
   it('accepts one local npm registry mirror and rejects other registry forms', () => {
     const release = { ...POLICY, DSH_DESKTOP_APP_ID: RELEASE.DSH_DESKTOP_APP_ID }
     expect(() => {

@@ -121,7 +121,10 @@ export function validateDesktopPackageEnvironment(environment, target, options =
   resolveDesktopTargetBuildPaths(environment, target.platform, target.arch)
   resolveDesktopAppId(environment)
   resolveNpmRegistry(environment)
-  if (target.platform !== 'darwin' || !options.unsigned) resolveDesktopPolicyEnvironment(environment)
+  // 未签名构建不读取强制更新策略：本地/测试构建没有真实策略服务，
+  // 烘入一个虚构源站只会让客户端持续轮询不存在的域名。该豁免原仅适用于
+  // macOS，现推广到所有平台（Windows 未签名构建同理）。
+  if (!options.unsigned) resolveDesktopPolicyEnvironment(environment)
   if (target.platform === 'darwin') resolveMacOSPackageSettings(environment)
   else resolveWindowsPackageSettings(environment)
   if (options.unsigned) return
